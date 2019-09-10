@@ -1,0 +1,198 @@
+<?php
+//конектимся к бд
+$hostname = "localhost";
+$log = "root";
+$pass = "";
+$dbname = "db";
+$connect = mysqli_connect($hostname, $log, $pass, $dbname)
+	or die("Сonnection error!" . mysqli_error($connect));
+mysqli_set_charset ($connect , "utf8");
+
+$resultCars = mysqli_query($connect, 'SELECT * FROM `Cars`');//машины
+$resultDrivers = mysqli_query($connect, 'SELECT * FROM `Drivers`');//водители
+
+// SELECT Name, SeatCount, ChildSeat, COUNT(Drivers.ID_cars) AS КоличествоВодителей
+// FROM Cars
+// JOIN Drivers ON Cars.ID_cars = Drivers.ID_cars
+// WHERE SeatCount > 5
+// GROUP BY Name, SeatCount, ChildSeat
+// HAVING COUNT(Drivers.ID_cars) >= 2
+// ORDER BY Name
+
+
+// SELECT Drivers.Fullname, Drivers.DrivingLicense, Name
+// FROM Cars
+// JOIN Drivers ON Cars.ID_cars = Drivers.ID_cars
+// WHERE SeatCount = 5
+// AND
+// Cars.MotorPower > (SELECT AVG(MotorPower) FROM Cars)
+// ORDER BY Name, Fullname
+
+		$firstRequest = mysqli_query($connect, 'SELECT Name, SeatCount, ChildSeat, COUNT(Drivers.ID_cars) AS КоличествоВодителей
+		FROM Cars
+		JOIN Drivers ON Cars.ID_cars = Drivers.ID_cars
+		WHERE SeatCount > 5
+		GROUP BY Name, SeatCount, ChildSeat
+		HAVING COUNT(Drivers.ID_cars) >= 2
+		ORDER BY Name
+		');
+
+		$secondRequest = mysqli_query($connect, 'SELECT Drivers.Fullname, Drivers.DrivingLicense, Name
+		FROM Cars
+		JOIN Drivers ON Cars.ID_cars = Drivers.ID_cars
+		WHERE SeatCount = 5
+		AND
+		Cars.MotorPower > (SELECT AVG(MotorPower) FROM Cars)
+		ORDER BY Name, Fullname
+		');
+?>
+<html>
+	<head>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+	</head>
+	<div class="container">
+		<div class="row">
+			<div class="col-6">
+				<table class="table table-hover">
+					<thead>	
+						<tr align="center">
+							<th scope="col">Машина</th>
+							<th>Гос.номер</th>
+							<th>Наличие дет.кресла</th>
+							<th>Мощность</th>
+							<th>Кол-во мест</th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php while($result = mysqli_fetch_array($resultCars)){ ?>
+						<tr align="center">
+							<td><?php echo $result['Name']; ?></td>
+							<td><?php echo $result['Number']; ?></td>
+							<td>
+								<?php 
+									 $replace = $result['ChildSeat'];
+									 if($replace == '1'){
+										 echo 'Есть';
+									 }else{
+										 echo 'Нет';
+									 }
+								?>
+							</td>
+							<td><?php echo $result['MotorPower']; ?></td>
+							<td><?php echo $result['SeatCount']; ?></td>
+						</tr>	
+						<?php } ?>		
+					</tbody>
+				</table>
+			</div>
+			
+			<div class="col-6">
+				<table  class="table table-hover">
+					<thead>
+						<tr align="center">
+							<th>ФИО водителя</th>
+							<th>Автомобиль</th>
+							<th>Водительское удостоверение</th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php while($result = mysqli_fetch_array($resultDrivers)){ ?>
+						<tr align="center">
+							<td><?php echo $result['Fullname']; ?></td>
+							<td>
+								<?php
+									$carFullName = $result['ID_cars'];
+									if($carFullName == '1'){
+										echo 'BMW';
+									}elseif($carFullName == '2'){
+										echo 'Жигуль';
+									}elseif($carFullName == '3'){
+										echo 'Трактор';
+									}elseif($carFullName == '4'){
+										echo 'Камаз';
+									}elseif($carFullName == '5'){
+										echo 'Лимузин';
+									}
+								?>
+							</td>
+							<td><?php echo $result['DrivingLicense']; ?></td>
+						</tr>	
+						<?php } ?>		
+					</tbody>
+				</table>
+			</div>
+			
+			<div class="col">
+				<table id="firstRequestTable" class="table table-hover table-dark" hidden>
+					<thead>
+						<tr align="center">
+							<th>Автомобиль</th>
+							<th>Кол-во мест</th>
+							<th>Наличие дет.кресла</th>
+							<th>Кол-во водителей</th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php while($result = mysqli_fetch_array($firstRequest)){ ?>
+						<tr align="center">
+							<td><?php echo $result['Name']; ?></td>
+							<td><?php echo $result['SeatCount']; ?></td>
+							<td>
+								<?php 
+									 $replace = $result['ChildSeat'];
+									 if($replace == '1'){
+										 echo 'Есть';
+									 }else{
+										 echo 'Нет';
+									 }
+								?>
+							</td>
+							<td><?php echo $result['КоличествоВодителей']; ?></td>
+						</tr>	
+						<?php } ?>		
+					</tbody>
+				</table>
+				<table id="secondRequestTable" class="table table-hover table-dark" hidden>
+					<thead>
+						<tr align="center">
+							<th>ФИО водителя</th>
+							<th>Водительское удостоверение</th>
+							<th>Автомобиль</th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php while($result = mysqli_fetch_array($secondRequest)){ ?>
+						<tr align="center">
+							<td><?php echo $result['Fullname']; ?></td>
+							<td><?php echo $result['DrivingLicense']; ?></td>
+							<td><?php echo $result['Name']; ?></td>
+						</tr>	
+						<?php } ?>		
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</div>
+
+	<div class="col text-center">
+		<input align="center" class="btn btn-success" id="test" type="button" value="Первый запрос" onclick="firstRequest()"></input>
+		<input align="center" class="btn btn-info" type="button" value="Второй запрос" onclick="secondRequest()"></input>
+	</div>
+	
+	<script>
+		function firstRequest(){
+			var firstRequest = document.getElementById('firstRequestTable');
+			var secondRequest = document.getElementById('secondRequestTable');
+			
+			firstRequest.removeAttribute('hidden');
+			secondRequest.setAttribute('hidden', 'true');
+		}
+		function secondRequest(){
+			var secondRequest = document.getElementById('secondRequestTable');
+			var firstRequest = document.getElementById('firstRequestTable');
+			
+			secondRequest.removeAttribute('hidden');
+			firstRequest.setAttribute('hidden', 'true');
+		}
+	</script>
+</html>
